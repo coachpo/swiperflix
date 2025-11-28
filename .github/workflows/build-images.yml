@@ -91,4 +91,6 @@ jobs:
           platforms: ${{ env.BUILD_PLATFORM }}
           provenance: false
           sbom: false
-          build-args: ${{ matrix.service == env.PLAYER_SERVICE && format('NEXT_PUBLIC_API_BASE_URL={0}\nNEXT_PUBLIC_API_BEARER_TOKEN={1}', env.NEXT_PUBLIC_API_BASE_URL, env.NEXT_PUBLIC_API_BEARER_TOKEN) || '' }}
+          build-args: |
+            ${{ matrix.service == env.PLAYER_SERVICE && format('NEXT_PUBLIC_API_BASE_URL={0}
+            NEXT_PUBLIC_API_BEARER_TOKEN={1}', env.NEXT_PUBLIC_API_BASE_URL, env.NEXT_PUBLIC_API_BEARER_TOKEN) || '' }}
