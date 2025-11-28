@@ -3,6 +3,8 @@ services:
   caddy:
     image: caddy:2-alpine
     container_name: swiperflix-caddy
+    networks:
+      - swiperflix_net
     ports:
       - "8066:80"
     volumes:
@@ -19,6 +21,8 @@ services:
   gateway:
     image: ghcr.io/coachpo/swiperflix-gateway:latest
     container_name: swiperflix-gateway
+    networks:
+      - swiperflix_net
     expose:
       - "8000"
     env_file:
@@ -31,6 +35,8 @@ services:
   player:
     image: ghcr.io/coachpo/swiperflix-player:latest
     container_name: swiperflix-player
+    networks:
+      - swiperflix_net
     expose:
       - "3000"
     depends_on:
@@ -44,3 +50,8 @@ volumes:
     driver: local
   swiperflix_caddy_logs:
     driver: local
+
+networks:
+  swiperflix_net:
+    name: swiperflix_net
+    driver: bridge
