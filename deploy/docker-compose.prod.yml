@@ -28,7 +28,7 @@ services:
     env_file:
       - gateway.env
     volumes:
-      - ./data/swiperflix.db:/app/swiperflix.db
+      - swiperflix_db:/app/swiperflix.db
     restart: unless-stopped
 
   # Player frontend service - using GitHub Container Registry
@@ -49,6 +49,8 @@ volumes:
   swiperflix_caddy_config:
     driver: local
   swiperflix_caddy_logs:
+    driver: local
+  swiperflix_db:
     driver: local
 
 networks:
