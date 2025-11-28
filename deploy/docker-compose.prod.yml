@@ -7,9 +7,9 @@ services:
       - "8066:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-      - caddy_logs:/var/log/caddy
+      - swiperflix_caddy_data:/data
+      - swiperflix_caddy_config:/config
+      - swiperflix_caddy_logs:/var/log/caddy
     depends_on:
       - player
       - gateway
@@ -38,9 +38,9 @@ services:
     restart: unless-stopped
 
 volumes:
-  caddy_data:
+  swiperflix_caddy_data:
     driver: local
-  caddy_config:
+  swiperflix_caddy_config:
     driver: local
-  caddy_logs:
+  swiperflix_caddy_logs:
     driver: local
