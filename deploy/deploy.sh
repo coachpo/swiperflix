@@ -9,6 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 COMPOSE_FILE="docker-compose.prod.yml"
+PROJECT_NAME="swiperflix"
 
 # Colors for output
 RED='\033[0;31m'
@@ -52,11 +53,11 @@ print_status "Stack: swiperflix (gateway + player)"
 
 # Pull latest images
 print_status "Pulling latest images..."
-docker compose -f "$COMPOSE_FILE" pull
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" pull
 
 # Stop existing containers
 print_status "Stopping existing containers..."
-docker compose -f "$COMPOSE_FILE" down
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" down
 
 # Ensure data dir for SQLite persistence
 if [ ! -d "data" ]; then
@@ -69,11 +70,11 @@ fi
 
 # Start services
 print_status "Starting services..."
-docker compose -f "$COMPOSE_FILE" up -d
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d
 
 print_status "✅ Deployment steps finished."
 print_status "Application expected at: http://localhost:8066"
 
 # Show running containers
 print_status "Running containers:"
-docker compose -f "$COMPOSE_FILE" ps
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" ps
