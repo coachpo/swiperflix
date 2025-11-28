@@ -1,0 +1,8 @@
+[submodule "swiperflix-player"]
+	path = swiperflix-player
+	url = git@github.com:coachpo/swiperflix-player.git
+	branch = main
+[submodule "swiperflix-gateway"]
+	path = swiperflix-gateway
+	url = git@github.com:coachpo/swiperflix-gateway.git
+	branch = main

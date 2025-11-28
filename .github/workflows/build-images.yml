@@ -1,0 +1,95 @@
+name: Build Images
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Select service to build"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - gateway
+          - player
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_GATEWAY: ${{ github.repository }}-gateway
+  IMAGE_NAME_PLAYER: ${{ github.repository }}-player
+  GATEWAY_SERVICE: gateway
+  PLAYER_SERVICE: player
+  GATEWAY_DIR: swiperflix-gateway
+  PLAYER_DIR: swiperflix-player
+  BUILD_PLATFORM: linux/arm64
+  DOCKER_DRIVER: docker-container
+  # Frontend env
+  NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+  NEXT_PUBLIC_API_BEARER_TOKEN: ${{ secrets.NEXT_PUBLIC_API_BEARER_TOKEN }}
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.service != 'all' && format('["{0}"]', inputs.service) || '["gateway","player"]') }}
+
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Set up QEMU (for arm64 emulation)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.service }} image
+        uses: docker/build-push-action@v5
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: ${{ matrix.service == env.GATEWAY_SERVICE && env.GATEWAY_DIR || env.PLAYER_DIR }}
+          file: ${{ matrix.service == env.GATEWAY_SERVICE && format('{0}/Dockerfile', env.GATEWAY_DIR) || format('{0}/Dockerfile', env.PLAYER_DIR) }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ matrix.service == env.GATEWAY_SERVICE && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER }}:latest
+            ${{ env.REGISTRY }}/${{ matrix.service == env.GATEWAY_SERVICE && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER }}:v${{ github.run_number }}
+          cache-from: |
+            type=gha,scope=${{ matrix.service }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ matrix.service == env.GATEWAY_SERVICE && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER }}:cache
+          cache-to: |
+            type=gha,mode=max,scope=${{ matrix.service }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ matrix.service == env.GATEWAY_SERVICE && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER }}:cache,mode=max
+          platforms: ${{ env.BUILD_PLATFORM }}
+          provenance: false
+          sbom: false
+          build-args: ${{ matrix.service == env.PLAYER_SERVICE && format('NEXT_PUBLIC_API_BASE_URL={0}\nNEXT_PUBLIC_API_BEARER_TOKEN={1}', env.NEXT_PUBLIC_API_BASE_URL, env.NEXT_PUBLIC_API_BEARER_TOKEN) || '' }}

@@ -1,0 +1,46 @@
+name: Cleanup
+
+on:
+  schedule:
+    # Run every day at 3:00 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME_GATEWAY: ${{ github.repository }}-gateway
+  IMAGE_NAME_PLAYER: ${{ github.repository }}-player
+
+permissions:
+  contents: read
+  actions: write
+  packages: write
+
+jobs:
+  cleanup-workflow-runs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2.0.6
+        with:
+          retain_days: 0
+          keep_minimum_runs: 3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup-untagged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        service: [ gateway, player ]
+    steps:
+      - name: Delete UNTAGGED versions for ${{ matrix.service }}
+        uses: actions/delete-package-versions@v5
+        with:
+          owner: ${{ github.repository_owner }}
+          package-type: container
+          package-name: ${{ matrix.service == 'gateway' && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER }}
+          delete-only-untagged-versions: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
