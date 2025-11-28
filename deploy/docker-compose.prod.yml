@@ -28,7 +28,7 @@ services:
     env_file:
       - gateway.env
     volumes:
-      - swiperflix_db:/app/swiperflix.db
+      - swiperflix_db:/data
     restart: unless-stopped
 
   # Player frontend service - using GitHub Container Registry
