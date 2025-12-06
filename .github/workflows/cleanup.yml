@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 env:
+  REGISTRY: ghcr.io
   IMAGE_NAME_GATEWAY: ${{ github.repository }}-gateway
   IMAGE_NAME_PLAYER: ${{ github.repository }}-player
 
@@ -40,7 +41,7 @@ jobs:
         with:
           owner: ${{ github.repository_owner }}
           package-type: container
-          package-name: ${{ matrix.service == 'gateway' && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER }}
+          package-name: ${{ format('{0}/{1}', env.REGISTRY, matrix.service == 'gateway' && env.IMAGE_NAME_GATEWAY || env.IMAGE_NAME_PLAYER) }}
           delete-only-untagged-versions: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
