@@ -27,6 +27,7 @@ git submodule update --init --recursive
 Gateway (`swiperflix-gateway`, see `example.env`):
 - `OPENLIST_API_BASE_URL` (default `http://localhost:5244`)
 - `OPENLIST_DIR_PATH` (default `/`)
+- `API_BEARER_TOKEN` (default `this-is-the-key-for-local-dev`; set empty to disable auth)
 - `OPENLIST_PASSWORD` (optional)
 - `OPENLIST_TOKEN` (optional bearer)
 - `OPENLIST_USERNAME` (optional basic auth)
