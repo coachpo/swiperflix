@@ -1,0 +1,102 @@
+# SWIPERFLIX — PROJECT KNOWLEDGE BASE
+
+**Generated:** 2026-02-22
+**Commit:** 854a235
+**Branch:** main
+
+## OVERVIEW
+
+Monorepo (git submodules) for a TikTok-style video player demo. Two services: a FastAPI backend (`swiperflix-gateway`) syncs video metadata from an OpenList instance into SQLite and serves a playlist/reaction API; a Next.js 16 frontend (`swiperflix-player`) renders a gesture-driven video player consuming that API.
+
+## STRUCTURE
+
+```
+swiperflix/
+├── swiperflix-gateway/     # FastAPI backend (Python 3.11+, SQLite)
+├── swiperflix-player/      # Next.js 16 frontend (React 19, Tailwind 4, pnpm)
+├── .github/workflows/      # CI: build Docker images → GHCR, nightly cleanup
+├── .gitmodules              # Submodule definitions (both track main branch)
+└── README.md
+```
+
+Both subdirectories are **independent git submodules** (`git@github.com:coachpo/swiperflix-{gateway,player}.git`). The root repo only orchestrates CI and submodule references.
+
+## WHERE TO LOOK
+
+| Task | Location | Notes |
+|------|----------|-------|
+| API endpoints | `swiperflix-gateway/app/main.py` | All routes defined inline (no router split) |
+| DB models | `swiperflix-gateway/app/models.py` | Video, Reaction, Impression, NotPlayableReport |
+| OpenList integration | `swiperflix-gateway/app/openlist_client.py` | HTTP client, auth, URL resolution |
+| Video player UI | `swiperflix-player/components/player/VideoPlayer.tsx` | 1163-line monolith — gestures, preloading, playback |
+| Playlist state | `swiperflix-player/providers/playlist-provider.tsx` | React Context — fetch, paginate, prefetch, like/dislike |
+| API client (frontend) | `swiperflix-player/lib/api.ts` | Native fetch wrapper with timeout, auth headers |
+| API types/config | `swiperflix-player/lib/types.ts`, `lib/config.ts` | Shared types, endpoint templates |
+| CI pipeline | `.github/workflows/build-images.yml` | Matrix build for both services → GHCR |
+| GHCR cleanup | `.github/workflows/cleanup.yml` | Daily: prune old runs + untagged images |
+
+## DATA FLOW
+
+```
+OpenList instance
+    ↓ (sync: POST /api/fs/list, paginated)
+swiperflix-gateway (SQLite)
+    ↓ (GET /api/v1/playlist, POST /like, /dislike, /impression, /not-playable)
+swiperflix-player (browser)
+    ↓ (GET /api/v1/videos/{id}/stream → 302 redirect)
+OpenList direct download URL (video plays from source, no proxy)
+```
+
+## CONVENTIONS
+
+- **API versioning**: all endpoints under `/api/v1/`
+- **Error shape**: `{ error: { code: string, message: string, retryable?: boolean, details?: object } }`
+- **Auth**: Bearer token via `API_BEARER_TOKEN` env (gateway) / `NEXT_PUBLIC_API_BEARER_TOKEN` (player). Empty token disables auth.
+- **Submodules**: always clone with `--recurse-submodules`; update with `git submodule update --remote --merge`
+- **Docker platform**: CI targets `linux/arm64` only
+- **Image tags**: `ghcr.io/{repo}-{service}:latest` + `ghcr.io/{repo}-{service}:v{run_number}`
+- **Player env vars are build-time** (baked into Next.js bundle via `NEXT_PUBLIC_*` prefix)
+- **Gateway env vars are runtime** (read from `.env` or environment)
+
+## ANTI-PATTERNS (THIS PROJECT)
+
+- Do NOT add new route files — all gateway routes live in `main.py` (single-file pattern)
+- Do NOT proxy video streams through the gateway — it 302-redirects to OpenList
+- Do NOT use axios or other HTTP libs in the player — native `fetch` with `withTimeout` wrapper
+- Do NOT add state management libraries (zustand, redux) — React Context only
+- ESLint: `@next/next/no-img-element` is intentionally OFF (native video/img handling needed)
+
+## COMMANDS
+
+```bash
+# Gateway
+cd swiperflix-gateway
+pip install -e .
+uvicorn app.main:app --reload          # dev server :8000
+python -m app.sync                      # sync videos from OpenList
+python -m app.sync --dir /tv            # sync specific directory
+
+# Player
+cd swiperflix-player
+pnpm install
+pnpm dev                                # dev server :3000
+pnpm build && pnpm start                # production
+pnpm lint                               # eslint --max-warnings=0
+
+# Docker
+docker build -t swiperflix-gateway swiperflix-gateway/
+docker build --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.example.com -t swiperflix-player swiperflix-player/
+
+# Submodules
+git submodule update --remote --merge   # pull latest from both
+```
+
+## NOTES
+
+- No test suite exists in either subproject. No pytest, jest, or vitest configs.
+- No docker-compose file — services are built/run independently.
+- Gateway boots even if OpenList is unreachable; run `python -m app.sync` once connectivity is restored.
+- SQLite DB (`swiperflix.db`) is auto-created; delete it to force full resync.
+- `db.py` has an idempotent migration for `pick_count` column — new columns should follow the same `_ensure_*` pattern.
+- Player prefetches next 3 videos; when near tail, fetches more via cursor or prefetches a fresh playlist.
+- `VideoPlayer.tsx` is a 1163-line component — all gesture/playback/preload logic is colocated there.
