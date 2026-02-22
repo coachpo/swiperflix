@@ -31,9 +31,6 @@ env:
   PLAYER_DIR: swiperflix-player
   BUILD_PLATFORM: linux/arm64
   DOCKER_DRIVER: docker-container
-  # Frontend env
-  NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-  NEXT_PUBLIC_API_BEARER_TOKEN: ${{ secrets.NEXT_PUBLIC_API_BEARER_TOKEN }}
   NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
@@ -91,6 +88,4 @@ jobs:
           platforms: ${{ env.BUILD_PLATFORM }}
           provenance: false
           sbom: false
-          build-args: |
-            ${{ matrix.service == env.PLAYER_SERVICE && format('NEXT_PUBLIC_API_BASE_URL={0}
-            NEXT_PUBLIC_API_BEARER_TOKEN={1}', env.NEXT_PUBLIC_API_BASE_URL, env.NEXT_PUBLIC_API_BEARER_TOKEN) || '' }}
+

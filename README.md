@@ -18,6 +18,8 @@ swiperflix-player (browser)
 OpenList direct download URL (no proxy)
 ```
 
+Both services are designed to sit behind a reverse proxy. The player uses relative URLs (same origin), so no cross-origin configuration is needed.
+
 ## Repository Layout
 
 ```
@@ -52,19 +54,15 @@ git submodule update --init --recursive
 |----------|---------|-------|
 | `OPENLIST_API_BASE_URL` | `http://localhost:5244` | OpenList API endpoint |
 | `OPENLIST_DIR_PATH` | `/` | Directory to sync |
-| `API_BEARER_TOKEN` | `this-is-the-key-for-local-dev` | Empty = auth disabled |
 | `OPENLIST_PASSWORD` | — | Directory password |
 | `OPENLIST_TOKEN` | — | OpenList bearer token (raw, no prefix) |
 | `OPENLIST_USERNAME` | — | Basic auth username |
 | `OPENLIST_USER_PASSWORD` | — | Basic auth password |
 | `OPENLIST_PUBLIC_BASE_URL` | — | Public base for file URLs |
 
-### Player (`swiperflix-player/example.env`)
+### Player
 
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Gateway URL (build-time) |
-| `NEXT_PUBLIC_API_BEARER_TOKEN` | — | Optional; falls back to `NEXT_PUBLIC_API_TOKEN` |
+No configuration needed. The player uses relative URLs and expects to be served behind the same reverse proxy as the gateway.
 
 ## Local Development
 
@@ -92,7 +90,6 @@ SQLite DB (`swiperflix.db`) is auto-created. Delete it to force full resync.
 ```bash
 cd swiperflix-player
 pnpm install
-cp example.env .env.local        # optional if defaults are fine
 pnpm dev                         # http://localhost:3000
 ```
 
@@ -103,16 +100,16 @@ pnpm dev                         # http://localhost:3000
 
 ## API Reference
 
-All endpoints under `/api/v1/`. Auth via `Authorization: Bearer <token>`.
+All endpoints under `/api/v1/`. No authentication required (auth is expected at the reverse proxy layer).
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/playlist?limit=5` | Yes | Playlist (least-picked first, increments pick_count) |
-| GET | `/videos/{id}/stream` | No | 302 redirect to source URL |
-| POST | `/videos/{id}/like` | Yes | Like (deduped per session) |
-| POST | `/videos/{id}/dislike` | Yes | Dislike (deduped per session) |
-| POST | `/videos/{id}/impression` | Yes | Watch progress tracking |
-| POST | `/videos/{id}/not-playable` | Yes | Report playback issue |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/playlist?limit=5` | Playlist (least-picked first, increments pick_count) |
+| GET | `/videos/{id}/stream` | 302 redirect to source URL |
+| POST | `/videos/{id}/like` | Like (deduped per session) |
+| POST | `/videos/{id}/dislike` | Dislike (deduped per session) |
+| POST | `/videos/{id}/impression` | Watch progress tracking |
+| POST | `/videos/{id}/not-playable` | Report playback issue |
 
 Error shape: `{ error: { code, message, retryable?, details? } }`
 
@@ -125,11 +122,8 @@ Full API spec: `swiperflix-player/docs/api.md`
 docker build -t swiperflix-gateway swiperflix-gateway/
 docker run --env-file swiperflix-gateway/example.env -p 8000:8000 swiperflix-gateway
 
-# Player (env vars baked at build time)
-docker build \
-  --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.example.com \
-  --build-arg NEXT_PUBLIC_API_BEARER_TOKEN=your-token \
-  -t swiperflix-player swiperflix-player/
+# Player (no build args needed)
+docker build -t swiperflix-player swiperflix-player/
 docker run -p 3000:3000 swiperflix-player
 ```
 
@@ -149,7 +143,7 @@ git submodule update --remote --merge
 
 ## Troubleshooting
 
-- **404/connection errors from player**: confirm `NEXT_PUBLIC_API_BASE_URL` points to the running gateway.
+- **404/connection errors from player**: ensure the reverse proxy routes `/api/v1/*` to the gateway.
 - **Stale playlist**: delete `swiperflix-gateway/swiperflix.db` and restart to resync.
 - **Gateway boots with no videos**: OpenList was unreachable at startup. Run `python -m app.sync` manually.
 

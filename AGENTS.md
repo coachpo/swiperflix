@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-Monorepo (git submodules) for a TikTok-style video player demo. Two services: a FastAPI backend (`swiperflix-gateway`) syncs video metadata from an OpenList instance into SQLite and serves a playlist/reaction API; a Next.js 16 frontend (`swiperflix-player`) renders a gesture-driven video player consuming that API.
+Monorepo (git submodules) for a TikTok-style video player demo. Two services: a FastAPI backend (`swiperflix-gateway`) syncs video metadata from an OpenList instance into SQLite and serves a playlist/reaction API; a Next.js 16 frontend (`swiperflix-player`) renders a gesture-driven video player consuming that API. Both services sit behind a reverse proxy — no cross-origin config or bearer token auth needed.
 
 ## STRUCTURE
 
@@ -30,7 +30,7 @@ Both subdirectories are **independent git submodules** (`git@github.com:coachpo/
 | OpenList integration | `swiperflix-gateway/app/openlist_client.py` | HTTP client, auth, URL resolution |
 | Video player UI | `swiperflix-player/components/player/VideoPlayer.tsx` | 1163-line monolith — gestures, preloading, playback |
 | Playlist state | `swiperflix-player/providers/playlist-provider.tsx` | React Context — fetch, paginate, prefetch, like/dislike |
-| API client (frontend) | `swiperflix-player/lib/api.ts` | Native fetch wrapper with timeout, auth headers |
+| API client (frontend) | `swiperflix-player/lib/api.ts` | Native fetch wrapper with timeout |
 | API types/config | `swiperflix-player/lib/types.ts`, `lib/config.ts` | Shared types, endpoint templates |
 | CI pipeline | `.github/workflows/build-images.yml` | Matrix build for both services → GHCR |
 | GHCR cleanup | `.github/workflows/cleanup.yml` | Daily: prune old runs + untagged images |
@@ -51,11 +51,11 @@ OpenList direct download URL (video plays from source, no proxy)
 
 - **API versioning**: all endpoints under `/api/v1/`
 - **Error shape**: `{ error: { code: string, message: string, retryable?: boolean, details?: object } }`
-- **Auth**: Bearer token via `API_BEARER_TOKEN` env (gateway) / `NEXT_PUBLIC_API_BEARER_TOKEN` (player). Empty token disables auth.
+- **No application-level auth**: endpoints are open; auth is handled at the reverse proxy layer
+- **Player uses relative URLs**: `baseUrl` is empty string — all API calls resolve against current origin
 - **Submodules**: always clone with `--recurse-submodules`; update with `git submodule update --remote --merge`
 - **Docker platform**: CI targets `linux/arm64` only
 - **Image tags**: `ghcr.io/{repo}-{service}:latest` + `ghcr.io/{repo}-{service}:v{run_number}`
-- **Player env vars are build-time** (baked into Next.js bundle via `NEXT_PUBLIC_*` prefix)
 - **Gateway env vars are runtime** (read from `.env` or environment)
 
 ## ANTI-PATTERNS (THIS PROJECT)
@@ -65,6 +65,7 @@ OpenList direct download URL (video plays from source, no proxy)
 - Do NOT use axios or other HTTP libs in the player — native `fetch` with `withTimeout` wrapper
 - Do NOT add state management libraries (zustand, redux) — React Context only
 - ESLint: `@next/next/no-img-element` is intentionally OFF (native video/img handling needed)
+- Do NOT add bearer token auth to the gateway or player — auth belongs at the reverse proxy
 
 ## COMMANDS
 
@@ -85,7 +86,7 @@ pnpm lint                               # eslint --max-warnings=0
 
 # Docker
 docker build -t swiperflix-gateway swiperflix-gateway/
-docker build --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.example.com -t swiperflix-player swiperflix-player/
+docker build -t swiperflix-player swiperflix-player/
 
 # Submodules
 git submodule update --remote --merge   # pull latest from both
