@@ -188,13 +188,16 @@ Access the app at `http://localhost:3000`. The player's nginx handles API proxyi
 
 **Image Tags:**
 - `ghcr.io/{owner}/{repo}-gateway:latest`
-- `ghcr.io/{owner}/{repo}-gateway:v{run_number}`
+- `ghcr.io/{owner}/{repo}-gateway:v{service_version}`
+- `ghcr.io/{owner}/{repo}-gateway:sha-{short_sha}`
 - `ghcr.io/{owner}/{repo}-player:latest`
-- `ghcr.io/{owner}/{repo}-player:v{run_number}`
+- `ghcr.io/{owner}/{repo}-player:v{service_version}`
+- `ghcr.io/{owner}/{repo}-player:sha-{short_sha}`
 
 **Notes:**
 - Pull requests build but do not push images.
 - Platform: `linux/arm64` only.
+- Each service `VERSION` file must match its existing manifest version before CI will build.
 - Build cache: GitHub Actions cache + GHCR registry cache.
 - Concurrency: only one build per branch at a time (in-progress builds are cancelled).
 

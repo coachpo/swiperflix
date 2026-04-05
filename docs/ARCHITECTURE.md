@@ -347,11 +347,13 @@ The player's production nginx config handles two concerns:
 ```
 GitHub Actions
   │
-  ├── build-images.yml (on push to main)
+  ├── build-images.yml (push to main, PRs, manual dispatch)
   │   ├── Matrix: [gateway, player]
+  │   ├── Validate: service VERSION file matches existing manifest metadata
   │   ├── Build: docker buildx (arm64)
   │   ├── Push: ghcr.io/{repo}-{service}:latest
-  │   └── Tag:  ghcr.io/{repo}-{service}:v{run_number}
+  │   ├── Tag:  ghcr.io/{repo}-{service}:v{service_version}
+  │   └── Tag:  ghcr.io/{repo}-{service}:sha-{short_sha}
   │
   └── cleanup.yml (daily cron)
       ├── Delete old workflow runs (>30 days)
@@ -435,7 +437,7 @@ This is a deliberate design choice for simplicity in single-user or small-group 
 | React Context over state libs | Zero dependencies; sufficient for flat state | No devtools or middleware support |
 | No application auth | Simpler deployment; proxy handles it | Misconfigured proxy exposes all endpoints |
 | pick_count ordering | Fair rotation; less-seen content surfaces first | Predictable ordering if pick_count values are known |
-| Single monorepo root | One checkout and a shared CI context | Services no longer version independently |
+| Single monorepo root | One checkout and a shared CI context | Service versions stay explicit in each service directory |
 | ARM64-only Docker | Matches target hardware (Raspberry Pi, ARM cloud) | No x86 images available |
 | Vite SPA over Next.js SSR | Simpler build, no server runtime, nginx-servable | No SSR or SEO (not needed for this use case) |
 

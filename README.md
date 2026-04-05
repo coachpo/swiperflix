@@ -4,7 +4,7 @@ TikTok-style video player demo. Two-service stack:
 - **swiperflix-gateway** — FastAPI backend that syncs playlists from an [OpenList](https://github.com/OpenListTeam/OpenList) instance into SQLite and serves the API the player consumes.
 - **swiperflix-player** — Vite + React 19 frontend with gesture-driven video playback.
 
-CI builds Docker images to GHCR (`linux/arm64`).
+CI builds Docker images to GHCR (`linux/arm64`) and reads service-local `VERSION` files for release tags.
 
 ## Architecture
 
@@ -31,6 +31,12 @@ swiperflix/
 ```
 
 Both service directories are tracked directly in this repository.
+
+## Versioning
+
+- `swiperflix-gateway/VERSION` drives the gateway container version tag and should match `swiperflix-gateway/pyproject.toml`.
+- `swiperflix-player/VERSION` drives the player container version tag and should match `swiperflix-player/package.json`.
+- The gateway runtime metadata also uses the same backend version so the FastAPI app version stays aligned with packaging.
 
 ## Prerequisites
 
@@ -125,7 +131,12 @@ docker build -t swiperflix-player swiperflix-player/
 docker run -p 3000:3000 swiperflix-player
 ```
 
-CI targets `linux/arm64`. Images tagged `ghcr.io/{repo}-{service}:latest` + `:v{run_number}`.
+## CI/CD
+
+- Triggers: push to `main`, pull requests to `main`, and manual dispatch with a service selector.
+- Pull requests build both images but do not push them.
+- Pushes to the default branch publish `linux/arm64` images to GHCR with `latest`, `v{service_version}`, and `sha-{short_sha}` tags for each service.
+- CI validates that each service `VERSION` file matches its existing manifest version before building.
 
 ## Additional Docs
 
