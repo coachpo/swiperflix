@@ -29,7 +29,7 @@ from app.utils import error_response
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Swiperflix Gateway", version="1.0.0")
+app = FastAPI(title="Swiperflix Gateway", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
