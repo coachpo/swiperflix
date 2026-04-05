@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from pathlib import Path as FilePath
 from urllib.parse import urlparse
 from typing import Annotated
 
@@ -29,7 +30,17 @@ from app.utils import error_response
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Swiperflix Gateway", version="0.1.0")
+
+def get_app_version() -> str:
+    version_file = FilePath(__file__).resolve().parents[1] / "VERSION"
+    try:
+        version = version_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        return "0.1.0"
+    return version or "0.1.0"
+
+
+app = FastAPI(title="Swiperflix Gateway", version=get_app_version())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
