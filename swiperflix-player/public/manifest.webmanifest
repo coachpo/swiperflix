@@ -1,0 +1,17 @@
+{
+  "name": "Swiperflix",
+  "short_name": "Swiperflix",
+  "description": "Gesture-first short video player with TikTok-style swipes.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1024",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

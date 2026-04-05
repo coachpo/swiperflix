@@ -47,10 +47,9 @@ jobs:
         service: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.service != 'all' && format('["{0}"]', inputs.service) || '["gateway","player"]') }}
 
     steps:
-      - name: Checkout repository with submodules
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 1
 
       - name: Set up QEMU (for arm64 emulation)
@@ -88,4 +87,3 @@ jobs:
           platforms: ${{ env.BUILD_PLATFORM }}
           provenance: false
           sbom: false
-

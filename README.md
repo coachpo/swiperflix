@@ -2,7 +2,7 @@
 
 TikTok-style video player demo. Two-service stack:
 - **swiperflix-gateway** — FastAPI backend that syncs playlists from an [OpenList](https://github.com/OpenListTeam/OpenList) instance into SQLite and serves the API the player consumes.
-- **swiperflix-player** — Next.js 16 (App Router, React 19) frontend with gesture-driven video playback.
+- **swiperflix-player** — Vite + React 19 frontend with gesture-driven video playback.
 
 CI builds Docker images to GHCR (`linux/arm64`).
 
@@ -25,25 +25,23 @@ Both services are designed to sit behind a reverse proxy. The player uses relati
 ```
 swiperflix/
 ├── swiperflix-gateway/      # FastAPI, Python 3.11+, SQLAlchemy, SQLite
-├── swiperflix-player/       # Next.js 16, React 19, Tailwind CSS 4, pnpm
+├── swiperflix-player/       # Vite, React 19, Tailwind CSS 4, pnpm
 ├── .github/workflows/       # CI: build-images.yml + cleanup.yml
-└── .gitmodules              # Both submodules track main branch
+└── README.md
 ```
 
-Both subdirectories are independent git submodules (`git@github.com:coachpo/swiperflix-{gateway,player}.git`).
+Both service directories are tracked directly in this repository.
 
 ## Prerequisites
 
-- Git with submodule support
+- Git
 - Python 3.11+ (gateway)
 - Node.js 22+ and `pnpm` (player)
 
 ## Clone
 
 ```bash
-git clone --recurse-submodules <repo-url>
-# or if already cloned
-git submodule update --init --recursive
+git clone <repo-url>
 ```
 
 ## Environment Variables
@@ -85,7 +83,7 @@ python -m app.sync --dir /tv     # sync specific directory
 
 SQLite DB (`swiperflix.db`) is auto-created. Delete it to force full resync.
 
-### Player (Next.js)
+### Player (Vite)
 
 ```bash
 cd swiperflix-player
@@ -129,12 +127,6 @@ docker run -p 3000:3000 swiperflix-player
 
 CI targets `linux/arm64`. Images tagged `ghcr.io/{repo}-{service}:latest` + `:v{run_number}`.
 
-## Updating Submodules
-
-```bash
-git submodule update --remote --merge
-```
-
 ## Additional Docs
 
 - Gateway: `swiperflix-gateway/README.md`
@@ -149,4 +141,4 @@ git submodule update --remote --merge
 
 ## License
 
-See component licenses in each submodule.
+See component licenses in each service directory.

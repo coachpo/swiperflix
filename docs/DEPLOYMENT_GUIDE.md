@@ -8,7 +8,7 @@
 ## 1. Prerequisites
 
 - Docker (with buildx for ARM64 cross-compilation if building on x86)
-- Git with submodule support
+- Git
 - An accessible OpenList instance with video files
 
 For local development (without Docker):
@@ -20,17 +20,11 @@ For local development (without Docker):
 ## 2. Repository Setup
 
 ```bash
-# Clone with submodules
-git clone --recurse-submodules <repo-url>
-
-# Or if already cloned without submodules
-git submodule update --init --recursive
-
-# Pull latest changes from both submodules
-git submodule update --remote --merge
+git clone <repo-url>
+cd swiperflix
 ```
 
-Both `swiperflix-gateway/` and `swiperflix-player/` are independent git submodules tracking the `main` branch.
+Both `swiperflix-gateway/` and `swiperflix-player/` are normal service directories tracked directly in the monorepo.
 
 ---
 
@@ -187,7 +181,7 @@ Access the app at `http://localhost:3000`. The player's nginx handles API proxyi
 **Triggers:** Push to `main`, pull requests to `main`, manual dispatch (with service selector).
 
 **Flow:**
-1. Checkout repository with submodules
+1. Checkout repository
 2. Set up QEMU (ARM64 emulation) and Docker Buildx
 3. Log in to GitHub Container Registry (GHCR)
 4. Build and push images (matrix: gateway + player)

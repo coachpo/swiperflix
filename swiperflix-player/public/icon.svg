@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#0b1024"/>
+  <rect x="20" y="20" width="216" height="216" rx="40" fill="url(#g)" opacity="0.18"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+        font-family="Inter, 'SF Pro Display', sans-serif" font-size="96" font-weight="800"
+        fill="white">SF</text>
+</svg>

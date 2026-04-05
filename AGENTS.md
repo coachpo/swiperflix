@@ -6,20 +6,19 @@
 
 ## OVERVIEW
 
-Monorepo (git submodules) for a TikTok-style video player demo. Two services: a FastAPI backend (`swiperflix-gateway`) syncs video metadata from an OpenList instance into SQLite and serves a playlist/reaction API; a Next.js 16 frontend (`swiperflix-player`) renders a gesture-driven video player consuming that API. Both services sit behind a reverse proxy — no cross-origin config or bearer token auth needed.
+Monorepo for a TikTok-style video player demo. Two services: a FastAPI backend (`swiperflix-gateway`) syncs video metadata from an OpenList instance into SQLite and serves a playlist/reaction API; a Vite + React 19 frontend (`swiperflix-player`) renders a gesture-driven video player consuming that API. Both services sit behind a reverse proxy — no cross-origin config or bearer token auth needed.
 
 ## STRUCTURE
 
 ```
 swiperflix/
 ├── swiperflix-gateway/     # FastAPI backend (Python 3.11+, SQLite)
-├── swiperflix-player/      # Next.js 16 frontend (React 19, Tailwind 4, pnpm)
+├── swiperflix-player/      # Vite frontend (React 19, Tailwind 4, pnpm)
 ├── .github/workflows/      # CI: build Docker images → GHCR, nightly cleanup
-├── .gitmodules              # Submodule definitions (both track main branch)
 └── README.md
 ```
 
-Both subdirectories are **independent git submodules** (`git@github.com:coachpo/swiperflix-{gateway,player}.git`). The root repo only orchestrates CI and submodule references.
+Both service directories are tracked directly in the root repository.
 
 ## WHERE TO LOOK
 
@@ -28,10 +27,10 @@ Both subdirectories are **independent git submodules** (`git@github.com:coachpo/
 | API endpoints | `swiperflix-gateway/app/main.py` | All routes defined inline (no router split) |
 | DB models | `swiperflix-gateway/app/models.py` | Video, Reaction, Impression, NotPlayableReport |
 | OpenList integration | `swiperflix-gateway/app/openlist_client.py` | HTTP client, auth, URL resolution |
-| Video player UI | `swiperflix-player/components/player/VideoPlayer.tsx` | 1163-line monolith — gestures, preloading, playback |
-| Playlist state | `swiperflix-player/providers/playlist-provider.tsx` | React Context — fetch, paginate, prefetch, like/dislike |
-| API client (frontend) | `swiperflix-player/lib/api.ts` | Native fetch wrapper with timeout |
-| API types/config | `swiperflix-player/lib/types.ts`, `lib/config.ts` | Shared types, endpoint templates |
+| Video player UI | `swiperflix-player/src/components/player/VideoPlayer.tsx` | 1163-line monolith — gestures, preloading, playback |
+| Playlist state | `swiperflix-player/src/providers/playlist-provider.tsx` | React Context — fetch, paginate, prefetch, like/dislike |
+| API client (frontend) | `swiperflix-player/src/lib/api.ts` | Native fetch wrapper with timeout |
+| API types/config | `swiperflix-player/src/lib/types.ts`, `src/lib/config.ts` | Shared types, endpoint templates |
 | CI pipeline | `.github/workflows/build-images.yml` | Matrix build for both services → GHCR |
 | GHCR cleanup | `.github/workflows/cleanup.yml` | Daily: prune old runs + untagged images |
 
@@ -53,7 +52,7 @@ OpenList direct download URL (video plays from source, no proxy)
 - **Error shape**: `{ error: { code: string, message: string, retryable?: boolean, details?: object } }`
 - **No application-level auth**: endpoints are open; auth is handled at the reverse proxy layer
 - **Player uses relative URLs**: `baseUrl` is empty string — all API calls resolve against current origin
-- **Submodules**: always clone with `--recurse-submodules`; update with `git submodule update --remote --merge`
+- **Player build**: Vite builds static output to `dist/`
 - **Docker platform**: CI targets `linux/arm64` only
 - **Image tags**: `ghcr.io/{repo}-{service}:latest` + `ghcr.io/{repo}-{service}:v{run_number}`
 - **Gateway env vars are runtime** (read from `.env` or environment)
@@ -81,15 +80,13 @@ python -m app.sync --dir /tv            # sync specific directory
 cd swiperflix-player
 pnpm install
 pnpm dev                                # dev server :3000
-pnpm build && pnpm start                # production
+pnpm build && pnpm preview              # preview built app
 pnpm lint                               # eslint --max-warnings=0
 
 # Docker
 docker build -t swiperflix-gateway swiperflix-gateway/
 docker build -t swiperflix-player swiperflix-player/
 
-# Submodules
-git submodule update --remote --merge   # pull latest from both
 ```
 
 ## NOTES

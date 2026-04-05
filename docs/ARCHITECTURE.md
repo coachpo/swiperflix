@@ -7,7 +7,7 @@
 
 ## 1. System Architecture
 
-Swiperflix is a two-service system with an external dependency on OpenList for video storage. Both services are independently deployable Docker containers designed to sit behind a shared reverse proxy. The repository is structured as a monorepo with git submodules — each service has its own repo, CI, and release cycle.
+Swiperflix is a two-service system with an external dependency on OpenList for video storage. Both services are independently deployable Docker containers designed to sit behind a shared reverse proxy. The repository is a single monorepo that tracks both service directories together while keeping separate build contexts for each service.
 
 ```
                           ┌─────────────────────────────────────────────────┐
@@ -435,7 +435,7 @@ This is a deliberate design choice for simplicity in single-user or small-group 
 | React Context over state libs | Zero dependencies; sufficient for flat state | No devtools or middleware support |
 | No application auth | Simpler deployment; proxy handles it | Misconfigured proxy exposes all endpoints |
 | pick_count ordering | Fair rotation; less-seen content surfaces first | Predictable ordering if pick_count values are known |
-| Git submodules | Independent repos and CI pipelines | Friction during cloning and updating |
+| Single monorepo root | One checkout and a shared CI context | Services no longer version independently |
 | ARM64-only Docker | Matches target hardware (Raspberry Pi, ARM cloud) | No x86 images available |
 | Vite SPA over Next.js SSR | Simpler build, no server runtime, nginx-servable | No SSR or SEO (not needed for this use case) |
 
